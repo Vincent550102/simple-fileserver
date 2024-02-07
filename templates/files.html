@@ -5,6 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <link rel="stylesheet" href="{{ url_for('static', filename='tocas/tocas.min.css') }}" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+        <script src="https://unpkg.com/@popperjs/core@2"></script>
         <title>檔案列表 - Tocas UI</title>
         <script>
         window.onload = function() {
@@ -17,6 +18,16 @@
                     });
                     this.classList.add('is-selected');
                     const url = "{{request.url_root}}files/" + this.textContent.trim();
+
+                    const button = document.querySelector('#button');
+                    const tooltip = document.querySelector('#tooltip');
+
+                    // Pass the button, the tooltip, and some options, and Popper will do the
+                    // magic positioning for you:
+                    Popper.createPopper(button, tooltip, {
+                      placement: 'right',
+                    });
+
                     document.getElementById('download-btn').href = url;
                     document.getElementById('link-btn').addEventListener('click', function() {
                           if (navigator.clipboard && window.isSecureContext) {
@@ -42,7 +53,28 @@
                     })
                 });
             });
+        document.getElementById('link-btn').addEventListener('click', function() {
+            var popperContent = document.getElementById('popperContent');
+            popperContent.style.display = 'block'; // 确保提示内容是可见的
+
+            Popper.createPopper(this, popperContent, {
+                placement: 'left',
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [0, 8],
+                        },
+                    },
+                ],
+            });
+
+            setTimeout(() => {
+                popperContent.style.display = 'none';
+            }, 2000);
+        });
         };
+
         </script>
 
     </head>
@@ -78,5 +110,6 @@
                 </div>
             </div>
         </div>
+        <div id="popperContent" style="display: none;">Copied!</div>
     </body>
 </html>
