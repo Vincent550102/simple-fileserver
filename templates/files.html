@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html class="is-secondary">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='tocas/tocas.min.css') }}" />
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+        <title>檔案列表 - Tocas UI</title>
+        <script>
+        window.onload = function() {
+            const items = document.querySelectorAll('.item');
+
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    items.forEach(i => {
+                        i.classList.remove('is-selected');
+                    });
+                    this.classList.add('is-selected');
+                    const url = "{{request.url_root}}files/" + this.textContent.trim();
+                    document.getElementById('download-btn').href = url;
+                    document.getElementById('link-btn').addEventListener('click', function() {
+                          if (navigator.clipboard && window.isSecureContext) {
+                            // navigator clipboard api method'
+                            return navigator.clipboard.writeText(url);
+                          } else {
+                            // text area method
+                            let textArea = document.createElement("textarea");
+                            textArea.value = url;
+                            // make the textarea out of viewport
+                            textArea.style.position = "fixed";
+                            textArea.style.left = "-999999px";
+                            textArea.style.top = "-999999px";
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            return new Promise((res, rej) => {
+                              // here the magic happens
+                              document.execCommand('copy') ? res() : rej();
+                              textArea.remove();
+                            });
+                          }
+                    })
+                });
+            });
+        };
+        </script>
+
+    </head>
+    <body style="overflow: hidden">
+        <div class="ts-container is-very-narrow has-top-spaced-huge">
+            <div class="ts-grid is-middle-aligned">
+                <a href="{{ request.url_root }}" class="item column is-fluid"> {{ request.url_root }}</a>
+                <button id="link-btn" class="column ts-button is-circular is-icon is-ghost">
+                    <span class="ts-icon is-link-icon">
+                    </span>
+                </button>
+
+                <a id="download-btn">
+                    <button class="column ts-button is-circular is-icon is-ghost">
+                        <span class="ts-icon is-download-icon">
+                        </span>
+                    </button>
+                </a>
+            </div>
+            <div class="ts-grid is-relaxed has-top-spaced">
+                <div class="column is-16-wide">
+                    <div class="ts-box" style="height: 100vh">
+                        <div class="ts-menu is-small is-start-icon">
+                            {% for file in files %}
+                                <a href="#" class="item">
+                                    <span class="ts-icon is-regular is-file-icon"></span>
+                                    {{ file }}
+                                </a>
+                                <div class="ts-divider"></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

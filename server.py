@@ -1,16 +1,18 @@
-from flask import Flask, request, jsonify, send_from_directory, abort
+from flask import Flask, request, jsonify, send_from_directory, abort, render_template
 from werkzeug.utils import secure_filename
 import os
 
-UPLOAD_FOLDER = 'tmp'  # 替換成你想要上傳文件保存的地方
+UPLOAD_FOLDER = 'uploads'  # 替換成你想要上傳文件保存的地方
 ALLOWED_EXTENSIONS = set(['pdf'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.abspath(UPLOAD_FOLDER)
 
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 
 @app.route('/', methods=['GET'])
 def upload_file():
@@ -24,6 +26,7 @@ def upload_file():
     </form>
     '''
 
+
 @app.route('/files', methods=['GET', 'POST'])
 def list_upload_files():
     if request.method == 'POST':
@@ -33,7 +36,10 @@ def list_upload_files():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return jsonify({"message": "File uploaded successfully.", "url": request.url_root+"files/"+filename}), 200
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-    return jsonify(files)
+    print(files)
+    return render_template('files.html', files=files)
+    # return jsonify(files)
+
 
 @app.route('/files/<filename>', methods=['GET'])
 def get_file(filename):
@@ -42,9 +48,11 @@ def get_file(filename):
     else:
         abort(404, description="File not found")
 
+
 @app.route('/files/<filename>', methods=['DELETE'])
 def delete_file(filename):
-    file_path = os.path.abspath(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    file_path = os.path.abspath(os.path.join(
+        app.config['UPLOAD_FOLDER'], filename))
 
     if not file_path.startswith(app.config['UPLOAD_FOLDER']):
         abort(403, description="Unauthorized request")
@@ -58,4 +66,3 @@ def delete_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
-
