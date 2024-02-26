@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory, abort, render_template
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 
@@ -7,6 +8,7 @@ ALLOWED_EXTENSIONS = set(['pdf'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.abspath(UPLOAD_FOLDER)
+CORS(app)
 
 
 def allowed_file(filename):
@@ -21,7 +23,8 @@ def upload_file():
     <title>Upload new File</title>
     <h1>Upload new File</h1>
     <form action="/files" method=post enctype=multipart/form-data>
-      <input type=file name=file>
+      <input type=file name=file multiple>
+      <input type=text name=prefix multiple>
       <input type=submit value=Upload>
     </form>
     '''
@@ -30,11 +33,15 @@ def upload_file():
 @app.route('/files', methods=['GET', 'POST'])
 def list_upload_files():
     if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return jsonify({"message": "File uploaded successfully.", "url": request.url_root+"files/"+filename}), 200
+        files = request.files.getlist("file")
+        prefix = request.form.get('prefix', default=None, type=str)
+        results = []
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = (prefix if prefix else "")+secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                results.append(filename)
+        return jsonify({"message": "File uploaded successfully.", "filenames": results}), 200
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     print(files)
     return render_template('files.html', files=files)
@@ -65,4 +72,4 @@ def delete_file(filename):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="127.0.0.1", port=8002)
